@@ -634,8 +634,13 @@ input, select, textarea {
   background: var(--tuwa-gray-100);
   border: 1px solid var(--tuwa-gray-300);
   border-radius: var(--radius-sm);
-  padding: 8px 24px 8px 8px;
+  padding: 8px 52px 8px 8px;
   margin-bottom: 8px;
+}
+
+.added-line-row-editing {
+  border-color: var(--tuwa-orange);
+  background: var(--tuwa-orange-light);
 }
 
 .added-line-row:last-child {
@@ -675,21 +680,50 @@ input, select, textarea {
   padding: 1px 6px;
 }
 
-.added-line-remove {
+.added-line-actions {
   position: absolute;
   top: 4px;
   right: 4px;
-  width: 20px;
-  height: 20px;
+  display: flex;
+  gap: 4px;
+}
+
+.added-line-edit,
+.added-line-remove {
+  width: 22px;
+  height: 22px;
   border-radius: 999px;
   border: none;
-  background: var(--tuwa-white);
-  color: var(--tuwa-danger);
-  font-size: 14px;
+  font-size: 11px;
   font-weight: 800;
   line-height: 1;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 0;
+}
+
+.added-line-edit {
+  background: var(--tuwa-white);
+  border: 1px solid var(--tuwa-gray-300);
+}
+
+.added-line-remove {
+  background: var(--tuwa-white);
+  color: var(--tuwa-danger);
+  border: 1px solid var(--tuwa-danger);
+}
+
+/* Add-line form in "editing an existing row" mode */
+
+.add-line-form-editing {
+  border-color: var(--tuwa-orange);
+}
+
+.add-line-editing-badge {
+  margin: 0 0 10px;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--tuwa-orange-dark);
 }

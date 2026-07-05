@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { ClientPrice, OrderItem, PriceCategory, Product } from "../../types";
 import { getPriceCategoryInfo, getProductPrice } from "../../lib/priceCategories";
 import { formatMoney } from "../../lib/format";
@@ -8,18 +8,32 @@ export function AddLineForm({
   products,
   priceCategory,
   clientPrices,
-  onAdd,
+  editItem,
+  onSave,
+  onCancelEdit,
 }: {
   products: Product[];
   priceCategory: PriceCategory;
   clientPrices: ClientPrice[];
-  onAdd: (item: OrderItem) => void;
+  editItem: OrderItem | null;
+  onSave: (item: OrderItem) => void;
+  onCancelEdit: () => void;
 }) {
   const [productId, setProductId] = useState("");
   const [quantity, setQuantity] = useState("1");
   const [isDifferentiated, setIsDifferentiated] = useState(false);
   const [unitPriceUSD, setUnitPriceUSD] = useState("");
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (editItem) {
+      setProductId(String(editItem.productId));
+      setQuantity(String(editItem.quantity));
+      setIsDifferentiated(editItem.isDifferentiated);
+      setUnitPriceUSD(editItem.isDifferentiated ? String(editItem.unitPrice) : "");
+      setError("");
+    }
+  }, [editItem]);
 
   const product = products.find((p) => String(p.id) === productId);
   const categoryInfo = getPriceCategoryInfo(priceCategory);
@@ -44,7 +58,15 @@ export function AddLineForm({
     }
   }
 
-  function handleAdd() {
+  function resetFields() {
+    setProductId("");
+    setQuantity("1");
+    setIsDifferentiated(false);
+    setUnitPriceUSD("");
+    setError("");
+  }
+
+  function handleSubmit() {
     setError("");
     if (!product) {
       setError("Seleccioná un producto.");
@@ -86,15 +108,19 @@ export function AddLineForm({
       };
     }
 
-    onAdd(item);
-    setProductId("");
-    setQuantity("1");
-    setIsDifferentiated(false);
-    setUnitPriceUSD("");
+    onSave(item);
+    resetFields();
+  }
+
+  function handleCancel() {
+    resetFields();
+    onCancelEdit();
   }
 
   return (
-    <div className="card add-line-form">
+    <div className={`card add-line-form${editItem ? " add-line-form-editing" : ""}`}>
+      {editItem && <p className="add-line-editing-badge">✏️ Editando línea</p>}
+
       <div className="field" style={{ marginBottom: 10 }}>
         <label>Descripción del producto</label>
         <ProductSearchSelect products={products} value={productId} onChange={handleProductChange} />
@@ -151,9 +177,14 @@ export function AddLineForm({
         </p>
       )}
 
-      <button type="button" className="btn btn-dark" style={{ marginTop: 12 }} onClick={handleAdd}>
-        + Agregar línea
+      <button type="button" className="btn btn-dark" style={{ marginTop: 12 }} onClick={handleSubmit}>
+        {editItem ? "Guardar cambios" : "+ Agregar línea"}
       </button>
+      {editItem && (
+        <button type="button" className="btn btn-ghost btn-sm" style={{ marginTop: 8 }} onClick={handleCancel}>
+          Cancelar edición
+        </button>
+      )}
     </div>
   );
 }

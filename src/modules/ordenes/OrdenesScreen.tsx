@@ -21,6 +21,7 @@ export function OrdenesScreen() {
   const [categoryOverride, setCategoryOverride] = useState<PriceCategory | null>(null);
   const [changingCategory, setChangingCategory] = useState(false);
   const [items, setItems] = useState<OrderItem[]>([]);
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [error, setError] = useState("");
   const [generatedOrder, setGeneratedOrder] = useState<Order | null>(null);
   const [saving, setSaving] = useState(false);
@@ -66,7 +67,22 @@ export function OrdenesScreen() {
   function resetForm() {
     setClientId("");
     setItems([]);
+    setEditingIndex(null);
     setError("");
+  }
+
+  function handleSaveLine(item: OrderItem) {
+    if (editingIndex !== null) {
+      setItems((prev) => prev.map((it, i) => (i === editingIndex ? item : it)));
+      setEditingIndex(null);
+    } else {
+      setItems((prev) => [...prev, item]);
+    }
+  }
+
+  function handleRemoveLine(index: number) {
+    setItems((prev) => prev.filter((_, i) => i !== index));
+    if (editingIndex === index) setEditingIndex(null);
   }
 
   async function handleGenerar() {
@@ -185,13 +201,17 @@ export function OrdenesScreen() {
                     products={products ?? []}
                     priceCategory={priceCategory}
                     clientPrices={clientPrices ?? []}
-                    onAdd={(item) => setItems((prev) => [...prev, item])}
+                    editItem={editingIndex !== null ? items[editingIndex] : null}
+                    onSave={handleSaveLine}
+                    onCancelEdit={() => setEditingIndex(null)}
                   />
                 </div>
                 <div className="order-builder-list">
                   <AddedLinesList
                     items={items}
-                    onRemove={(idx) => setItems((prev) => prev.filter((_, i) => i !== idx))}
+                    editingIndex={editingIndex}
+                    onEdit={setEditingIndex}
+                    onRemove={handleRemoveLine}
                   />
                 </div>
               </div>
