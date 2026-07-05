@@ -12,6 +12,7 @@ import { PRICE_CATEGORIES } from "../../lib/priceCategories";
 export function ProductosScreen() {
   const products = useLiveQuery(() => db.products.toArray(), []);
   const [search, setSearch] = useState("");
+  const [expandedId, setExpandedId] = useState<number | null>(null);
   const [editing, setEditing] = useState<Product | null | undefined>(undefined);
   const [toDelete, setToDelete] = useState<Product | null>(null);
   const showToast = useToast();
@@ -60,9 +61,15 @@ export function ProductosScreen() {
   async function handleDelete() {
     if (toDelete?.id) {
       await db.products.delete(toDelete.id);
+      if (expandedId === toDelete.id) setExpandedId(null);
       showToast("Producto eliminado");
     }
     setToDelete(null);
+  }
+
+  function toggleExpanded(id?: number) {
+    if (!id) return;
+    setExpandedId((prev) => (prev === id ? null : id));
   }
 
   return (
@@ -77,7 +84,7 @@ export function ProductosScreen() {
         onChange={(e) => setSearch(e.target.value)}
       />
 
-      <div className="card" style={{ marginBottom: 14 }}>
+      <div className="card" style={{ marginBottom: 14, padding: 6 }}>
         {sorted.length === 0 ? (
           <EmptyState
             icon="📦"
@@ -88,53 +95,49 @@ export function ProductosScreen() {
             }
           />
         ) : (
-          sorted.map((p) => (
-            <div className="list-row" key={p.id} style={{ display: "block" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
-                <div style={{ fontWeight: 700, fontSize: 14 }}>
-                  <span className="pill" style={{ marginRight: 6 }}>
+          sorted.map((p) => {
+            const isOpen = expandedId === p.id;
+            return (
+              <div key={p.id} className="product-accordion-item">
+                <button
+                  type="button"
+                  className="product-accordion-header"
+                  onClick={() => toggleExpanded(p.id)}
+                >
+                  <span className="pill" style={{ flexShrink: 0 }}>
                     {p.code}
                   </span>
-                  {p.description}
-                </div>
-                <div className="row-actions">
-                  <button className="btn btn-outline btn-sm" onClick={() => setEditing(p)}>
-                    Editar
-                  </button>
-                  <button className="btn btn-danger btn-sm" onClick={() => setToDelete(p)}>
-                    Borrar
-                  </button>
-                </div>
+                  <span className="product-accordion-desc">{p.description}</span>
+                  <span className={`product-accordion-chevron ${isOpen ? "open" : ""}`}>›</span>
+                </button>
+
+                {isOpen && (
+                  <div className="product-accordion-body">
+                    <div className="product-price-row">
+                      {PRICE_CATEGORIES.map((cat) => (
+                        <div className="product-price-chip" key={cat.key}>
+                          <span className="product-price-chip-label">{cat.shortLabel}</span>
+                          <span className="product-price-chip-value">
+                            {cat.currency === "USD"
+                              ? formatUSD(p[cat.productField])
+                              : formatCRC(p[cat.productField])}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="row-actions" style={{ marginTop: 10 }}>
+                      <button className="btn btn-outline btn-sm" onClick={() => setEditing(p)}>
+                        Editar
+                      </button>
+                      <button className="btn btn-danger btn-sm" onClick={() => setToDelete(p)}>
+                        Borrar
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
-                  gap: 6,
-                  marginTop: 8,
-                  fontSize: 12,
-                  color: "var(--tuwa-gray-700)",
-                }}
-              >
-                <div>
-                  <span className="pill pill-gray">{PRICE_CATEGORIES[0].shortLabel}</span>{" "}
-                  {formatCRC(p.distribuidorCRC)}
-                </div>
-                <div>
-                  <span className="pill pill-gray">{PRICE_CATEGORIES[1].shortLabel}</span>{" "}
-                  {formatUSD(p.veinsaRegularUSD)}
-                </div>
-                <div>
-                  <span className="pill pill-gray">{PRICE_CATEGORIES[2].shortLabel}</span>{" "}
-                  {formatUSD(p.veinsaEspecialUSD)}
-                </div>
-                <div>
-                  <span className="pill pill-gray">{PRICE_CATEGORIES[3].shortLabel}</span>{" "}
-                  {formatCRC(p.agenteAutorizadoCRC)}
-                </div>
-              </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
 

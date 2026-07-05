@@ -1,4 +1,4 @@
-export type ScreenId = "productos" | "clientes" | "ordenes" | "reportes";
+export type ScreenId = "inicio" | "productos" | "clientes" | "ordenes" | "reportes";
 
 interface NavItem {
   id: ScreenId;
@@ -7,6 +7,7 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
+  { id: "inicio", label: "Inicio", icon: "🏠" },
   { id: "productos", label: "Productos", icon: "📦" },
   { id: "clientes", label: "Clientes", icon: "👥" },
   { id: "ordenes", label: "Órdenes", icon: "🧾" },

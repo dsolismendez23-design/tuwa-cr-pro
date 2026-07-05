@@ -423,3 +423,92 @@ input, select, textarea {
   background: var(--tuwa-black);
   color: var(--tuwa-white);
 }
+
+/* Home screen module cards */
+
+.home-module-card:active {
+  background: var(--tuwa-gray-900);
+  border-color: var(--tuwa-orange);
+}
+
+/* Productos accordion list */
+
+.product-accordion-item {
+  border-bottom: 1px solid var(--tuwa-gray-100);
+}
+
+.product-accordion-item:last-child {
+  border-bottom: none;
+}
+
+.product-accordion-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: none;
+  padding: 12px 6px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.product-accordion-desc {
+  flex: 1;
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--tuwa-black);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.product-accordion-chevron {
+  flex-shrink: 0;
+  font-size: 20px;
+  color: var(--tuwa-gray-500);
+  transform: rotate(90deg);
+  transition: transform 0.15s ease;
+}
+
+.product-accordion-chevron.open {
+  transform: rotate(-90deg);
+  color: var(--tuwa-orange);
+}
+
+.product-accordion-body {
+  padding: 0 6px 14px;
+}
+
+.product-price-row {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.product-price-chip {
+  flex: 0 0 auto;
+  min-width: 108px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: var(--tuwa-gray-100);
+  border: 1px solid var(--tuwa-gray-300);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+}
+
+.product-price-chip-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--tuwa-gray-700);
+  text-transform: uppercase;
+  letter-spacing: 0.2px;
+}
+
+.product-price-chip-value {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--tuwa-black);
+}

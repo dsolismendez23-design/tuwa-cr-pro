@@ -1,4 +1,5 @@
 const TITLES: Record<string, { title: string; subtitle: string }> = {
+  inicio: { title: "TUWA CR PRO", subtitle: "Menú principal" },
   productos: { title: "Productos", subtitle: "Catálogo y precios" },
   clientes: { title: "Clientes", subtitle: "Datos y precios diferenciados" },
   ordenes: { title: "Órdenes de Compra", subtitle: "Generar y compartir" },
