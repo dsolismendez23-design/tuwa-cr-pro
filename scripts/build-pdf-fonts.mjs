@@ -17,6 +17,10 @@ const extra = [
   0x2018, 0x2019, 0x201c, 0x201d, // ' ' " "
   0x2022, 0xb7, 0xd7, 0xf7, // • · × ÷
   0xb0, 0xaa, // ° ª
+  0xa0, 0x202f, 0x2009, // no-break space, narrow no-break space, thin space
+  // (Intl.NumberFormat("es-CR", ...) groups thousands with U+00A0, not a
+  // plain space - without its glyph jsPDF stopped rendering right after it,
+  // cutting off amounts like "₡149 622,00" down to just "₡149")
 ];
 for (const code of extra) charset += String.fromCodePoint(code);
 
