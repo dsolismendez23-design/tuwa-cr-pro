@@ -1,0 +1,1 @@
+if('serviceWorker' in navigator) {window.addEventListener('load', () => {navigator.serviceWorker.register('/tuwa-cr-pro/sw.js', { scope: '/tuwa-cr-pro/' })})}
