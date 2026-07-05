@@ -115,19 +115,12 @@ export function OrdenesScreen() {
       setError("Seleccioná un cliente.");
       return;
     }
-    if (lines.length === 0) {
-      setError("Agregá al menos un producto.");
-      return;
-    }
 
     const categoryInfo = getPriceCategoryInfo(client.priceCategory);
     const items: OrderItem[] = [];
     for (const line of lines) {
       const product = products?.find((p) => String(p.id) === line.productId);
-      if (!product) {
-        setError("Todas las líneas deben tener un producto seleccionado.");
-        return;
-      }
+      if (!product) continue;
       const qty = Number(line.quantity);
       if (!Number.isFinite(qty) || qty <= 0) {
         setError(`Cantidad inválida para ${product.description}.`);
@@ -161,6 +154,11 @@ export function OrdenesScreen() {
           priceLabel: categoryInfo.label,
         });
       }
+    }
+
+    if (items.length === 0) {
+      setError("Agregá al menos un producto a la orden.");
+      return;
     }
 
     setSaving(true);
@@ -239,18 +237,10 @@ export function OrdenesScreen() {
                   priceCategory={priceCategory}
                   onChange={(patch) => updateLine(line.key, patch)}
                   onRemove={() => removeLine(line.key)}
+                  onAdd={() => setLines((prev) => [...prev, newLine()])}
                   canRemove={lines.length > 1}
                 />
               ))}
-
-              <button
-                type="button"
-                className="btn btn-ghost"
-                onClick={() => setLines((prev) => [...prev, newLine()])}
-                style={{ marginBottom: 14 }}
-              >
-                + Agregar producto a la orden
-              </button>
 
               <div className="card">
                 {totalCRC > 0 && (

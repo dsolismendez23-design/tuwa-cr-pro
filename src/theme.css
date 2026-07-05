@@ -512,3 +512,58 @@ input, select, textarea {
   font-weight: 800;
   color: var(--tuwa-black);
 }
+
+/* Product search-select (Órdenes de Compra) */
+
+.product-search-dropdown {
+  position: absolute;
+  z-index: 15;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 240px;
+  overflow-y: auto;
+  background: var(--tuwa-white);
+  border: 1.5px solid var(--tuwa-gray-300);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.product-search-option {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--tuwa-gray-100);
+  padding: 10px 12px;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.product-search-option:last-child {
+  border-bottom: none;
+}
+
+.product-search-option:active {
+  background: var(--tuwa-gray-100);
+}
+
+.product-search-empty {
+  padding: 12px;
+  font-size: 12px;
+  color: var(--tuwa-gray-500);
+  text-align: center;
+}
+
+.order-line-card {
+  position: relative;
+}
+
+.order-line-add-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+}

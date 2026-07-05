@@ -1,6 +1,7 @@
 import type { PriceCategory, Product } from "../../types";
 import { getPriceCategoryInfo, getProductPrice } from "../../lib/priceCategories";
 import { formatMoney } from "../../lib/format";
+import { ProductSearchSelect } from "../../components/ProductSearchSelect";
 
 export interface DraftLine {
   key: string;
@@ -16,6 +17,7 @@ export function OrdenLineItem({
   priceCategory,
   onChange,
   onRemove,
+  onAdd,
   canRemove,
 }: {
   line: DraftLine;
@@ -23,6 +25,7 @@ export function OrdenLineItem({
   priceCategory: PriceCategory;
   onChange: (patch: Partial<DraftLine>) => void;
   onRemove: () => void;
+  onAdd: () => void;
   canRemove: boolean;
 }) {
   const product = products.find((p) => String(p.id) === line.productId);
@@ -30,19 +33,22 @@ export function OrdenLineItem({
 
   return (
     <div className="order-line-card">
-      <div className="field" style={{ marginBottom: 10 }}>
-        <label>Producto</label>
-        <select
+      <button
+        type="button"
+        className="btn btn-dark btn-sm order-line-add-btn"
+        onClick={onAdd}
+        title="Agregar producto a la orden"
+      >
+        + Producto
+      </button>
+
+      <div className="field" style={{ marginBottom: 10, marginTop: 30 }}>
+        <label>Descripción del producto</label>
+        <ProductSearchSelect
+          products={products}
           value={line.productId}
-          onChange={(e) => onChange({ productId: e.target.value })}
-        >
-          <option value="">Seleccionar producto...</option>
-          {products.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.code} · {p.description}
-            </option>
-          ))}
-        </select>
+          onChange={(productId) => onChange({ productId })}
+        />
       </div>
 
       <div className="field" style={{ marginBottom: 0 }}>
