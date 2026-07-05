@@ -13,19 +13,27 @@ export function ProductSearchSelect({
   placeholder?: string;
 }) {
   const selected = products.find((p) => String(p.id) === value);
-  const [query, setQuery] = useState(selected ? `${selected.code} · ${selected.description}` : "");
+  const selectedLabel = selected ? `${selected.code} · ${selected.description}` : "";
+
+  const [query, setQuery] = useState(selectedLabel);
   const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Only resync the visible text from the selected product when the user
+  // isn't actively typing a search — otherwise every keystroke would get
+  // wiped out as soon as it clears the previous selection.
   useEffect(() => {
-    const current = products.find((p) => String(p.id) === value);
-    setQuery(current ? `${current.code} · ${current.description}` : "");
-  }, [value, products]);
+    if (!editing) {
+      setQuery(selectedLabel);
+    }
+  }, [selectedLabel, editing]);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setOpen(false);
+        setEditing(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -34,19 +42,18 @@ export function ProductSearchSelect({
 
   const matches = useMemo(() => {
     const term = query.trim().toLowerCase();
-    const list =
-      !term || (selected && query === `${selected.code} · ${selected.description}`)
-        ? products
-        : products.filter(
-            (p) =>
-              p.description.toLowerCase().includes(term) || p.code.toLowerCase().includes(term)
-          );
+    const list = !term || query === selectedLabel
+      ? products
+      : products.filter(
+          (p) => p.description.toLowerCase().includes(term) || p.code.toLowerCase().includes(term)
+        );
     return list.slice(0, 30);
-  }, [products, query, selected]);
+  }, [products, query, selectedLabel]);
 
   function handlePick(p: Product) {
     onChange(String(p.id));
     setQuery(`${p.code} · ${p.description}`);
+    setEditing(false);
     setOpen(false);
   }
 
@@ -58,9 +65,9 @@ export function ProductSearchSelect({
         placeholder={placeholder}
         onFocus={() => setOpen(true)}
         onChange={(e) => {
+          setEditing(true);
           setQuery(e.target.value);
           setOpen(true);
-          if (value) onChange("");
         }}
       />
       {open && (
