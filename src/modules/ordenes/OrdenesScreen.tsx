@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "../../db";
 import type { ClientPrice, Order, OrderItem, PriceCategory } from "../../types";
@@ -6,16 +6,11 @@ import { EmptyState } from "../../components/EmptyState";
 import { useToast } from "../../components/Toast";
 import { ShareOrderSheet } from "../../components/ShareOrderSheet";
 import { PriceCategoryPicker } from "../../components/PriceCategoryPicker";
-import { OrdenLineItem, type DraftLine } from "./OrdenLineItem";
+import { AddLineForm } from "./AddLineForm";
+import { AddedLinesList } from "./AddedLinesList";
 import { ClienteForm } from "../clientes/ClienteForm";
 import { formatCRC, formatUSD } from "../../lib/format";
-import { getPriceCategoryInfo, getProductPrice } from "../../lib/priceCategories";
-
-let lineKeyCounter = 0;
-function newLine(): DraftLine {
-  lineKeyCounter += 1;
-  return { key: `line-${lineKeyCounter}`, productId: "", quantity: "1", isDifferentiated: false, unitPriceUSD: "" };
-}
+import { getPriceCategoryInfo } from "../../lib/priceCategories";
 
 export function OrdenesScreen() {
   const clients = useLiveQuery(() => db.clients.toArray(), []);
@@ -23,52 +18,27 @@ export function OrdenesScreen() {
   const showToast = useToast();
 
   const [clientId, setClientId] = useState("");
-  const [lines, setLines] = useState<DraftLine[]>([newLine()]);
+  const [categoryOverride, setCategoryOverride] = useState<PriceCategory | null>(null);
+  const [changingCategory, setChangingCategory] = useState(false);
+  const [items, setItems] = useState<OrderItem[]>([]);
   const [error, setError] = useState("");
   const [generatedOrder, setGeneratedOrder] = useState<Order | null>(null);
   const [saving, setSaving] = useState(false);
   const [showNewClient, setShowNewClient] = useState(false);
 
   const selectedClient = clients?.find((c) => String(c.id) === clientId);
-  const priceCategory: PriceCategory = selectedClient?.priceCategory ?? "distribuidor";
+  const priceCategory: PriceCategory = categoryOverride ?? selectedClient?.priceCategory ?? "distribuidor";
+
+  useEffect(() => {
+    setCategoryOverride(null);
+    setChangingCategory(false);
+  }, [clientId]);
 
   const clientPrices = useLiveQuery(
     (): Promise<ClientPrice[]> =>
       clientId ? db.clientPrices.where("clientId").equals(Number(clientId)).toArray() : Promise.resolve([]),
     [clientId]
   );
-
-  function priceLookup(productId: string): number | undefined {
-    const match = clientPrices?.find((cp) => String(cp.productId) === productId);
-    return match?.priceUSD;
-  }
-
-  function updateLine(key: string, patch: Partial<DraftLine>) {
-    setLines((prev) =>
-      prev.map((l) => {
-        if (l.key !== key) return l;
-        const next = { ...l, ...patch };
-        if (patch.isDifferentiated === true && !next.unitPriceUSD) {
-          const suggested = priceLookup(next.productId);
-          if (suggested !== undefined) next.unitPriceUSD = String(suggested);
-        }
-        if (patch.productId !== undefined && next.isDifferentiated) {
-          const suggested = priceLookup(patch.productId);
-          next.unitPriceUSD = suggested !== undefined ? String(suggested) : "";
-        }
-        return next;
-      })
-    );
-  }
-
-  function removeLine(key: string) {
-    setLines((prev) => prev.filter((l) => l.key !== key));
-  }
-
-  async function handleCategoryChange(next: PriceCategory) {
-    if (!selectedClient?.id) return;
-    await db.clients.update(selectedClient.id, { priceCategory: next });
-  }
 
   async function handleNewClientSave(data: {
     name: string;
@@ -85,26 +55,17 @@ export function OrdenesScreen() {
   const { totalCRC, totalUSD } = useMemo(() => {
     let crc = 0;
     let usd = 0;
-    for (const line of lines) {
-      const product = products?.find((p) => String(p.id) === line.productId);
-      const qty = Number(line.quantity);
-      if (!product || !Number.isFinite(qty)) continue;
-      if (line.isDifferentiated) {
-        const price = Number(line.unitPriceUSD);
-        if (Number.isFinite(price)) usd += qty * price;
-      } else {
-        const info = getPriceCategoryInfo(priceCategory);
-        const price = getProductPrice(product, priceCategory);
-        if (info.currency === "USD") usd += qty * price;
-        else crc += qty * price;
-      }
+    for (const item of items) {
+      const subtotal = item.quantity * item.unitPrice;
+      if (item.currency === "USD") usd += subtotal;
+      else crc += subtotal;
     }
     return { totalCRC: crc, totalUSD: usd };
-  }, [lines, products, priceCategory]);
+  }, [items]);
 
   function resetForm() {
     setClientId("");
-    setLines([newLine()]);
+    setItems([]);
     setError("");
   }
 
@@ -115,47 +76,6 @@ export function OrdenesScreen() {
       setError("Seleccioná un cliente.");
       return;
     }
-
-    const categoryInfo = getPriceCategoryInfo(client.priceCategory);
-    const items: OrderItem[] = [];
-    for (const line of lines) {
-      const product = products?.find((p) => String(p.id) === line.productId);
-      if (!product) continue;
-      const qty = Number(line.quantity);
-      if (!Number.isFinite(qty) || qty <= 0) {
-        setError(`Cantidad inválida para ${product.description}.`);
-        return;
-      }
-      if (line.isDifferentiated) {
-        const price = Number(line.unitPriceUSD);
-        if (!Number.isFinite(price) || price < 0) {
-          setError(`Ingresá el precio diferenciado en USD para ${product.description}.`);
-          return;
-        }
-        items.push({
-          productId: product.id!,
-          code: product.code,
-          description: product.description,
-          quantity: qty,
-          unitPrice: price,
-          currency: "USD",
-          isDifferentiated: true,
-          priceLabel: "Precio diferenciado",
-        });
-      } else {
-        items.push({
-          productId: product.id!,
-          code: product.code,
-          description: product.description,
-          quantity: qty,
-          unitPrice: getProductPrice(product, client.priceCategory),
-          currency: categoryInfo.currency,
-          isDifferentiated: false,
-          priceLabel: categoryInfo.label,
-        });
-      }
-    }
-
     if (items.length === 0) {
       setError("Agregá al menos un producto a la orden.");
       return;
@@ -168,7 +88,7 @@ export function OrdenesScreen() {
         clientName: client.name,
         clientAddress: client.address,
         clientContact: client.contact,
-        priceCategory: client.priceCategory,
+        priceCategory,
         date: new Date().toISOString(),
         items,
         totalCRC,
@@ -186,6 +106,7 @@ export function OrdenesScreen() {
   }
 
   const noProducts = products && products.length === 0;
+  const categoryInfo = getPriceCategoryInfo(priceCategory);
 
   return (
     <div>
@@ -223,24 +144,57 @@ export function OrdenesScreen() {
 
           {selectedClient && (
             <div className="card">
-              <PriceCategoryPicker value={priceCategory} onChange={handleCategoryChange} />
+              {!changingCategory ? (
+                <div className="category-display-row">
+                  <div>
+                    <span className="field-label-inline">Categoría de precio</span>
+                    <div className="category-display-value">
+                      {categoryInfo.label} ({categoryInfo.currency === "USD" ? "$" : "₡"})
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    className="btn btn-outline btn-sm"
+                    onClick={() => setChangingCategory(true)}
+                  >
+                    Cambiar
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <PriceCategoryPicker
+                    value={priceCategory}
+                    onChange={(next) => {
+                      setCategoryOverride(next);
+                      setChangingCategory(false);
+                    }}
+                  />
+                  <p style={{ fontSize: 11, color: "var(--tuwa-gray-500)", margin: "4px 0 0" }}>
+                    Este cambio es solo para esta orden, no modifica la categoría guardada del cliente.
+                  </p>
+                </>
+              )}
             </div>
           )}
 
           {selectedClient && (
             <>
-              {lines.map((line) => (
-                <OrdenLineItem
-                  key={line.key}
-                  line={line}
-                  products={products ?? []}
-                  priceCategory={priceCategory}
-                  onChange={(patch) => updateLine(line.key, patch)}
-                  onRemove={() => removeLine(line.key)}
-                  onAdd={() => setLines((prev) => [...prev, newLine()])}
-                  canRemove={lines.length > 1}
-                />
-              ))}
+              <div className="order-builder">
+                <div className="order-builder-form">
+                  <AddLineForm
+                    products={products ?? []}
+                    priceCategory={priceCategory}
+                    clientPrices={clientPrices ?? []}
+                    onAdd={(item) => setItems((prev) => [...prev, item])}
+                  />
+                </div>
+                <div className="order-builder-list">
+                  <AddedLinesList
+                    items={items}
+                    onRemove={(idx) => setItems((prev) => prev.filter((_, i) => i !== idx))}
+                  />
+                </div>
+              </div>
 
               <div className="card">
                 {totalCRC > 0 && (
