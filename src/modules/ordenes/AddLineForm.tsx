@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { ClientPrice, OrderItem, PriceCategory, Product } from "../../types";
+import type { OrderItem, PriceCategory, Product } from "../../types";
 import { getPriceCategoryInfo, getProductPrice } from "../../lib/priceCategories";
 import { formatMoney } from "../../lib/format";
 import { ProductSearchSelect } from "../../components/ProductSearchSelect";
@@ -7,14 +7,12 @@ import { ProductSearchSelect } from "../../components/ProductSearchSelect";
 export function AddLineForm({
   products,
   priceCategory,
-  clientPrices,
   editItem,
   onSave,
   onCancelEdit,
 }: {
   products: Product[];
   priceCategory: PriceCategory;
-  clientPrices: ClientPrice[];
   editItem: OrderItem | null;
   onSave: (item: OrderItem) => void;
   onCancelEdit: () => void;
@@ -37,26 +35,6 @@ export function AddLineForm({
 
   const product = products.find((p) => String(p.id) === productId);
   const categoryInfo = getPriceCategoryInfo(priceCategory);
-
-  function priceLookup(pid: string): number | undefined {
-    return clientPrices.find((cp) => String(cp.productId) === pid)?.priceUSD;
-  }
-
-  function handleProductChange(pid: string) {
-    setProductId(pid);
-    if (isDifferentiated) {
-      const suggested = priceLookup(pid);
-      setUnitPriceUSD(suggested !== undefined ? String(suggested) : "");
-    }
-  }
-
-  function handleDifferentiatedChange(checked: boolean) {
-    setIsDifferentiated(checked);
-    if (checked && !unitPriceUSD) {
-      const suggested = priceLookup(productId);
-      if (suggested !== undefined) setUnitPriceUSD(String(suggested));
-    }
-  }
 
   function resetFields() {
     setProductId("");
@@ -123,7 +101,7 @@ export function AddLineForm({
 
       <div className="field" style={{ marginBottom: 10 }}>
         <label>Descripción del producto</label>
-        <ProductSearchSelect products={products} value={productId} onChange={handleProductChange} />
+        <ProductSearchSelect products={products} value={productId} onChange={setProductId} />
       </div>
 
       <div className="field" style={{ marginBottom: 0 }}>
@@ -144,7 +122,7 @@ export function AddLineForm({
           type="checkbox"
           id="add-line-diff"
           checked={isDifferentiated}
-          onChange={(e) => handleDifferentiatedChange(e.target.checked)}
+          onChange={(e) => setIsDifferentiated(e.target.checked)}
           disabled={!productId}
         />
         <label htmlFor="add-line-diff">¿Precio diferenciado para este cliente?</label>

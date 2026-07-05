@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "../../db";
-import type { ClientPrice, Order, OrderItem, PriceCategory } from "../../types";
+import type { Order, OrderItem, PriceCategory } from "../../types";
 import { EmptyState } from "../../components/EmptyState";
 import { useToast } from "../../components/Toast";
 import { ShareOrderSheet } from "../../components/ShareOrderSheet";
@@ -34,12 +34,6 @@ export function OrdenesScreen() {
     setCategoryOverride(null);
     setChangingCategory(false);
   }, [clientId]);
-
-  const clientPrices = useLiveQuery(
-    (): Promise<ClientPrice[]> =>
-      clientId ? db.clientPrices.where("clientId").equals(Number(clientId)).toArray() : Promise.resolve([]),
-    [clientId]
-  );
 
   async function handleNewClientSave(data: {
     name: string;
@@ -200,7 +194,6 @@ export function OrdenesScreen() {
                   <AddLineForm
                     products={products ?? []}
                     priceCategory={priceCategory}
-                    clientPrices={clientPrices ?? []}
                     editItem={editingIndex !== null ? items[editingIndex] : null}
                     onSave={handleSaveLine}
                     onCancelEdit={() => setEditingIndex(null)}

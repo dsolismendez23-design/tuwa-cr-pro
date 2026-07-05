@@ -5,7 +5,6 @@ import type { Client, PriceCategory } from "../../types";
 import { EmptyState } from "../../components/EmptyState";
 import { ConfirmSheet } from "../../components/Sheet";
 import { ClienteForm } from "./ClienteForm";
-import { ClientePrecios } from "./ClientePrecios";
 import { useToast } from "../../components/Toast";
 import { getPriceCategoryInfo } from "../../lib/priceCategories";
 
@@ -45,7 +44,6 @@ export function ClientesScreen() {
 
   async function handleDelete() {
     if (toDelete?.id) {
-      await db.clientPrices.where("clientId").equals(toDelete.id).delete();
       await db.clients.delete(toDelete.id);
       showToast("Cliente eliminado");
       if (selected?.id === toDelete.id) setSelected(null);
@@ -80,10 +78,6 @@ export function ClientesScreen() {
           </div>
         </div>
 
-        <div className="card">
-          <ClientePrecios client={selected} />
-        </div>
-
         {editing !== undefined && (
           <ClienteForm
             initial={editing ?? undefined}
@@ -94,7 +88,7 @@ export function ClientesScreen() {
         {toDelete && (
           <ConfirmSheet
             title="Eliminar cliente"
-            message={`¿Seguro que querés eliminar a "${toDelete.name}"? También se eliminarán sus precios diferenciados.`}
+            message={`¿Seguro que querés eliminar a "${toDelete.name}"? Esta acción no se puede deshacer.`}
             onCancel={() => setToDelete(null)}
             onConfirm={handleDelete}
           />

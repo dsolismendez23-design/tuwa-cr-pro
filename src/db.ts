@@ -1,11 +1,10 @@
 import Dexie, { type Table } from "dexie";
-import type { Client, ClientPrice, Order, Product } from "./types";
+import type { Client, Order, Product } from "./types";
 import { SEED_PRODUCTS } from "./seedProducts";
 
 class TuwaDatabase extends Dexie {
   products!: Table<Product, number>;
   clients!: Table<Client, number>;
-  clientPrices!: Table<ClientPrice, number>;
   orders!: Table<Order, number>;
 
   constructor() {
@@ -43,6 +42,15 @@ class TuwaDatabase extends Dexie {
             c.priceCategory = c.priceCategory ?? "distribuidor";
           });
       });
+
+    // Per-client per-product custom pricing was removed in favor of the
+    // simpler category system managed entirely from the Clientes module.
+    this.version(3).stores({
+      products: "++id, &code, description",
+      clients: "++id, name",
+      clientPrices: null,
+      orders: "++id, clientId, createdAt",
+    });
 
     this.on("populate", () => {
       this.products.bulkAdd(SEED_PRODUCTS.map((p) => ({ ...p, createdAt: Date.now() })));

@@ -2,7 +2,7 @@ import type { ScreenId } from "../../components/BottomNav";
 
 const MODULES: { id: ScreenId; label: string; icon: string; description: string }[] = [
   { id: "productos", label: "Productos", icon: "📦", description: "Catálogo y precios" },
-  { id: "clientes", label: "Clientes", icon: "👥", description: "Datos y precios diferenciados" },
+  { id: "clientes", label: "Clientes", icon: "👥", description: "Datos y categoría de precio" },
   { id: "ordenes", label: "Órdenes de Compra", icon: "🧾", description: "Generar y compartir" },
   { id: "reportes", label: "Reportes", icon: "📊", description: "Historial de órdenes" },
 ];

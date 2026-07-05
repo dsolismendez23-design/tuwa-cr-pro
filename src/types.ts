@@ -24,14 +24,6 @@ export interface Client {
   createdAt: number;
 }
 
-export interface ClientPrice {
-  id?: number;
-  clientId: number;
-  productId: number;
-  priceUSD: number;
-  createdAt: number;
-}
-
 export interface OrderItem {
   productId: number;
   code: string;

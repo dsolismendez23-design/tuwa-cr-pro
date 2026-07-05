@@ -2,6 +2,19 @@ import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import type { Order } from "../types";
 import { formatCRC, formatUSD, formatDate } from "./format";
+import { PDF_FONT_BOLD_BASE64, PDF_FONT_REGULAR_BASE64 } from "./pdfFonts";
+
+const PDF_FONT = "TuwaSans";
+
+// Standard PDF fonts (Helvetica/Times/Courier) don't include the Costa Rican
+// colon sign (₡), so it rendered as a broken glyph. This embeds a subset of
+// Arial (regular/bold) that does, and it's used for all text in the PDF.
+function registerPdfFont(doc: jsPDF) {
+  doc.addFileToVFS("TuwaSans-Regular.ttf", PDF_FONT_REGULAR_BASE64);
+  doc.addFont("TuwaSans-Regular.ttf", PDF_FONT, "normal");
+  doc.addFileToVFS("TuwaSans-Bold.ttf", PDF_FONT_BOLD_BASE64);
+  doc.addFont("TuwaSans-Bold.ttf", PDF_FONT, "bold");
+}
 
 let logoDataUrlCache: string | null = null;
 
@@ -21,6 +34,8 @@ async function loadLogoDataUrl(): Promise<string> {
 
 export async function buildOrderPdf(order: Order): Promise<Blob> {
   const doc = new jsPDF({ unit: "pt", format: "a4" });
+  registerPdfFont(doc);
+  doc.setFont(PDF_FONT, "normal");
   const pageWidth = doc.internal.pageSize.getWidth();
   const marginX = 40;
 
@@ -31,7 +46,7 @@ export async function buildOrderPdf(order: Order): Promise<Blob> {
     doc.addImage(logo, "PNG", marginX, 30, logoW, logoH);
   } catch {
     doc.setFontSize(16);
-    doc.setFont("helvetica", "bold");
+    doc.setFont(PDF_FONT, "bold");
     doc.text("TUWA CR PRO", marginX, 50);
   }
 
@@ -41,22 +56,22 @@ export async function buildOrderPdf(order: Order): Promise<Blob> {
 
   doc.setTextColor(10, 10, 10);
   doc.setFontSize(18);
-  doc.setFont("helvetica", "bold");
+  doc.setFont(PDF_FONT, "bold");
   doc.text("Orden de Compra", marginX, 115);
 
   doc.setFontSize(10);
-  doc.setFont("helvetica", "normal");
+  doc.setFont(PDF_FONT, "normal");
   doc.setTextColor(74, 74, 74);
   doc.text(`No. de orden: ${order.id ?? "-"}`, pageWidth - marginX, 108, { align: "right" });
   doc.text(`Fecha: ${formatDate(order.date)}`, pageWidth - marginX, 122, { align: "right" });
 
   let y = 145;
   doc.setFontSize(11);
-  doc.setFont("helvetica", "bold");
+  doc.setFont(PDF_FONT, "bold");
   doc.setTextColor(10, 10, 10);
   doc.text("Cliente", marginX, y);
   y += 16;
-  doc.setFont("helvetica", "normal");
+  doc.setFont(PDF_FONT, "normal");
   doc.setFontSize(10);
   doc.setTextColor(40, 40, 40);
   doc.text(`Nombre: ${order.clientName}`, marginX, y);
@@ -76,9 +91,9 @@ export async function buildOrderPdf(order: Order): Promise<Blob> {
       const subtotalLabel = item.currency === "USD" ? formatUSD(subtotal) : formatCRC(subtotal);
       return [item.code, item.description, item.priceLabel, String(item.quantity), unitLabel, subtotalLabel];
     }),
-    headStyles: { fillColor: [10, 10, 10], textColor: [255, 255, 255], fontStyle: "bold" },
+    styles: { font: PDF_FONT, fontSize: 9, cellPadding: 6 },
+    headStyles: { font: PDF_FONT, fontStyle: "bold", fillColor: [10, 10, 10], textColor: [255, 255, 255] },
     alternateRowStyles: { fillColor: [242, 242, 242] },
-    styles: { fontSize: 9, cellPadding: 6 },
     columnStyles: {
       3: { halign: "right" },
       4: { halign: "right" },
@@ -87,7 +102,7 @@ export async function buildOrderPdf(order: Order): Promise<Blob> {
   });
 
   const finalY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 20;
-  doc.setFont("helvetica", "bold");
+  doc.setFont(PDF_FONT, "bold");
   doc.setFontSize(11);
   doc.setTextColor(10, 10, 10);
 
@@ -102,7 +117,7 @@ export async function buildOrderPdf(order: Order): Promise<Blob> {
   }
 
   doc.setFontSize(8);
-  doc.setFont("helvetica", "normal");
+  doc.setFont(PDF_FONT, "normal");
   doc.setTextColor(138, 138, 138);
   doc.text(
     "Generado desde la app TUWA CR PRO",
