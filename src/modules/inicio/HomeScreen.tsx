@@ -1,4 +1,5 @@
 import type { ScreenId } from "../../components/BottomNav";
+import { InstallAppButton } from "../../components/InstallAppButton";
 
 const MODULES: { id: ScreenId; label: string; icon: string; description: string }[] = [
   { id: "productos", label: "Productos", icon: "📦", description: "Catálogo y precios" },
@@ -19,6 +20,10 @@ export function HomeScreen({ onNavigate }: { onNavigate: (id: ScreenId) => void 
         <p style={{ fontSize: 13, color: "var(--tuwa-gray-700)", marginTop: 8 }}>
           Elegí un módulo para comenzar
         </p>
+      </div>
+
+      <div style={{ marginBottom: 18 }}>
+        <InstallAppButton />
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
